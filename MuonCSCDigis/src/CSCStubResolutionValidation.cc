@@ -27,11 +27,6 @@ CSCStubResolutionValidation::CSCStubResolutionValidation(const edm::ParameterSet
   // Initialize stub matcher
   cscStubMatcher_.reset(new CSCStubMatcher(pset, std::move(iC)));
 
-  // get the strip range (?) double check before pushing
-  minBXCLCT_ = pset.getParameter<std::vector<int>>("minBX");
-  maxBXCLCT_ = pset.getParameter<std::vector<int>>("maxBX");
-  verboseCLCT_ = pset.getParameter<std::vector<int>>("verbose");
-  
 }
 
 CSCStubResolutionValidation::~CSCStubResolutionValidation() {}
@@ -49,9 +44,9 @@ void CSCStubResolutionValidation::bookHistograms(DQMStore::IBooker& iBooker) {
     std::string t2 = "CLCTPosRes_qs_" + cn;
     std::string t3 = "CLCTPosRes_es_" + cn;
     
-    posresCLCT_hs[j] = iBooker.book1D(t1, t1 + ";Strip_{L1T} - Strip_{SIM}", 100, minBXCLCT_[j], maxBXCLCT_[j]);
-    posresCLCT_qs[j] = iBooker.book1D(t2, t2 + ";Strip_{L1T} - Strip_{SIM}", 100, minBXCLCT_[j], maxBXCLCT_[j]);
-    posresCLCT_es[j] = iBooker.book1D(t3, t3 + ";Strip_{L1T} - Strip_{SIM}", 100, minBXCLCT_[j], maxBXCLCT_[j]);
+    posresCLCT_hs[j] = iBooker.book1D(t1, t1 + ";Strip_{L1T} - Strip_{SIM}", 100, -1, 1);
+    posresCLCT_qs[j] = iBooker.book1D(t2, t2 + ";Strip_{L1T} - Strip_{SIM}", 100, -1, 1);
+    posresCLCT_es[j] = iBooker.book1D(t3, t3 + ";Strip_{L1T} - Strip_{SIM}", 100, -1, 1);
    
   }
 }
