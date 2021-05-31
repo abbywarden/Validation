@@ -30,23 +30,28 @@ public:
 
   // access to the matcher
   std::shared_ptr<CSCStubMatcher> cscStubMatcher() { return cscStubMatcher_; }
+  std::shared_ptr<CSCSimHitMatcher> muonSimHitMatcher() const { return muonSimHitMatcher_; }
   void setCSCStubMatcher(std::shared_ptr<CSCStubMatcher> s) { cscStubMatcher_ = s; }
 
+  
 private:
   bool isSimTrackGood(const SimTrack &t);
 
-  // edm::EDGetTokenT<CSCALCTDigiCollection> alcts_Token_;
   edm::EDGetTokenT<CSCCLCTDigiCollection> clcts_Token_;
-  //edm::EDGetTokenT<CSCCorrelatedLCTDigiCollection> lcts_Token_;
   edm::InputTag inputTag_;
 
   std::shared_ptr<CSCStubMatcher> cscStubMatcher_;
+  std::shared_ptr<CSCSimHitMatcher> muonSimHitMatcher_;
 
-  // resolution for each CSC TP; 10 CSC stations; first step: CLCT
+
+  // resolution for each CSC TP; 10 CSC stations;
   MonitorElement *posresCLCT_hs[10];
   MonitorElement *posresCLCT_qs[10];
   MonitorElement *posresCLCT_es[10];
 
+  MonitorElement *bendresCLCT[10];
+
+  
 
   edm::EDGetTokenT<edm::SimVertexContainer> simVertexInput_;
   edm::EDGetTokenT<edm::SimTrackContainer> simTrackInput_;
@@ -54,9 +59,6 @@ private:
   double simTrackMinEta_;
   double simTrackMaxEta_;
 
-  std::vector<int>  minBXCLCT_;
-  std::vector<int> maxBXCLCT_;
-  std::vector<int> verboseCLCT_;
   
 };
 

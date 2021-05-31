@@ -7,6 +7,9 @@
 #include "Geometry/CSCGeometry/interface/CSCLayerGeometry.h"
 #include "DataFormats/CSCDigi/interface/CSCCLCTDigi.h"
 
+#include "Validation/MuonHits/interface/CSCSimHitMatcher.h"
+#include "DataFormats/CSCDigi/interface/CSCConstants.h"
+
 
 
 CSCStubResolutionValidation::CSCStubResolutionValidation(const edm::ParameterSet& pset, edm::ConsumesCollector&& iC)
@@ -27,6 +30,9 @@ CSCStubResolutionValidation::CSCStubResolutionValidation(const edm::ParameterSet
   // Initialize stub matcher
   cscStubMatcher_.reset(new CSCStubMatcher(pset, std::move(iC)));
 
+  //make a new  sim hit matcher
+  muonSimHitMatcher_.reset(new CSCSimHitMatcher(pset, std::move(iC)));
+
 }
 
 CSCStubResolutionValidation::~CSCStubResolutionValidation() {}
@@ -39,17 +45,21 @@ void CSCStubResolutionValidation::bookHistograms(DQMStore::IBooker& iBooker) {
     int j = i - 1;
     const std::string cn(CSCDetId::chamberName(i));
 
-    //do just CLCT first; Position resolution
+    //Position resolution; CLCT
     std::string t1 = "CLCTPosRes_hs_" + cn;
     std::string t2 = "CLCTPosRes_qs_" + cn;
     std::string t3 = "CLCTPosRes_es_" + cn;
     
-    posresCLCT_hs[j] = iBooker.book1D(t1, t1 + ";Strip_{L1T} - Strip_{SIM}", 100, -1, 1);
-    posresCLCT_qs[j] = iBooker.book1D(t2, t2 + ";Strip_{L1T} - Strip_{SIM}", 100, -1, 1);
-    posresCLCT_es[j] = iBooker.book1D(t3, t3 + ";Strip_{L1T} - Strip_{SIM}", 100, -1, 1);
-   
+    posresCLCT_hs[j] = iBooker.book1D(t1, t1 + ";Strip_{L1T} - Strip_{SIM}", 50, -1, 1);
+    posresCLCT_qs[j] = iBooker.book1D(t2, t2 + ";Strip_{L1T} - Strip_{SIM}", 50, -1, 1);
+    posresCLCT_es[j] = iBooker.book1D(t3, t3 + ";Strip_{L1T} - Strip_{SIM}", 50, -1, 1);
+
+    //Slope resolution; CLCT
+    t1 = "CLCTBendRes_" + cn;
+    bendresCLCT[j] = iBooker.book1D(t1, t1 + ";Slope_{L1T} - Slope_{SIM}", 50, -0.5, 0.5);  
   }
 }
+
 
 void CSCStubResolutionValidation::analyze(const edm::Event& e, const edm::EventSetup& eventSetup) {
   // Define handles
@@ -65,9 +75,13 @@ void CSCStubResolutionValidation::analyze(const edm::Event& e, const edm::EventS
   // Initialize StubMatcher
   cscStubMatcher_->init(e, eventSetup);
 
+  // Initialize SimHitMatcher
+  muonSimHitMatcher_->init(e, eventSetup);
+ 
+  
   const edm::SimTrackContainer& sim_track = *sim_tracks.product();
   const edm::SimVertexContainer& sim_vert = *sim_vertices.product();
-
+  
   if (!clcts.isValid()) {
     edm::LogError("CSCStubResolutionValidation") << "Cannot get CLCTs by label " << inputTag_.encode();
   }
@@ -84,29 +98,85 @@ void CSCStubResolutionValidation::analyze(const edm::Event& e, const edm::EventS
   if (sim_track_selected.empty())
     return;
 
-  // Loop through good tracks, use corresponding vetrex to match stubs, then fill hists of chambers where the stub appears.
+  // Loop through good tracks, use corresponding vertex to match stubs, then fill hists of chambers where the stub appears.
   for (const auto& t : sim_track_selected) {
     std::vector<bool> hitCLCT(10);
     
+    std::vector<float> delta_fhs_clct(10);
+    std::vector<float> delta_fqs_clct(10);
+    std::vector<float> delta_fes_clct(10);
+
+    std::vector<float> dslope_clct(10);
+
+    // match the simhits to the track
+    muonSimHitMatcher_->match(t, sim_vert[t.vertIndex()]);
+
     // Match track to stubs with appropriate vertex
     cscStubMatcher_->match(t, sim_vert[t.vertIndex()]);
     
     // Store matched stubs.
     // Key: ChamberID, Value : CSCStubDigiContainer
     const auto& clcts = cscStubMatcher_->clcts();
-
-
+    
+    //CLCTs
     for (auto& [id, container] : clcts) {
       const CSCDetId cscId(id);
       const unsigned chamberType(cscId.iChamberType());
+
+      //get the best clct in chamber
+      const auto& clct = cscStubMatcher_->bestClctInChamber(id);
+      if (!clct.isValid()) continue;
+      
       hitCLCT[chamberType - 1] = true;
+      
+      //calculate deltastrip
+      int deltaStrip = 0;
+      if (cscId.station() == 1 and cscId.ring() == 4 and clct.getKeyStrip() > CSCConstants::MAX_HALF_STRIP_ME1B)
+      	deltaStrip = CSCConstants::MAX_NUM_STRIPS_ME1B;
+
+      //get the matched stub's keystrip 
+      const auto& hs_clct = clct.getKeyStrip();
+      const auto& qs_clct = clct.getKeyStrip(4);
+      const auto& es_clct = clct.getKeyStrip(8);
+
+      // fractional strip
+      const auto& fhs_clct = clct.getFractionalStrip(2);
+      const auto& fqs_clct = clct.getFractionalStrip(4);
+      const auto& fes_clct = clct.getFractionalStrip(8);
+
+      // in half-strips per layer
+      const float slopeHalfStrip(clct.getFractionalSlope());
+      const float slopeStrip(slopeHalfStrip / 2.);
+	
+      //get the fit hits in chamber for true value
+      float stripIntercept, stripSlope;
+      muonSimHitMatcher_->fitHitsInChamber(id, stripIntercept, stripSlope);
+
+      //add offset of +0.25 strips for non-ME1/1 chambers
+      const bool isME11(cscId.station()==1 and (cscId.ring()==4 or cscId.ring()==1));
+      if (!isME11){
+      	stripIntercept -= 0.25;
+      }
+
+      const auto& strip_csc_sh = stripIntercept;
+      const auto& bend_csc_sh = stripSlope;
+
+      delta_fhs_clct[chamberType - 1] = fhs_clct - deltaStrip - strip_csc_sh;
+      delta_fqs_clct[chamberType - 1] = fqs_clct - deltaStrip - strip_csc_sh;
+      delta_fqs_clct[chamberType - 1] = fes_clct - deltaStrip - strip_csc_sh;
+
+      dslope_clct[chamberType - 1] = slopeStrip - bend_csc_sh;
     }
 
     for (int i = 0; i < 10; i++) {
       if (hitCLCT[i]) {
-	posresCLCT_hs[i]->Fill(0);
-	posresCLCT_qs[i]->Fill(0);
-	posresCLCT_es[i]->Fill(0);
+
+	//fill histograms
+	posresCLCT_hs[i]->Fill(delta_fhs_clct[i]);
+	posresCLCT_qs[i]->Fill(delta_fqs_clct[i]);
+	posresCLCT_es[i]->Fill(delta_fes_clct[i]);
+	
+	bendresCLCT[i]->Fill(dslope_clct[i]);
       }
     }
   }
@@ -130,3 +200,5 @@ bool CSCStubResolutionValidation::isSimTrackGood(const SimTrack& t) {
     return false;
   return true;
 }
+
+
