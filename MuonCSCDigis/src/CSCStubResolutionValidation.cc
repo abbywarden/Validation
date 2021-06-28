@@ -8,7 +8,9 @@
 #include "DataFormats/CSCDigi/interface/CSCCLCTDigi.h"
 
 #include "Validation/MuonHits/interface/CSCSimHitMatcher.h"
-#include "DataFormats/CSCDigi/interface/CSCConstants.h"
+#include "DataFormats/L1TMuon/interface/CSCConstants.h"
+//#include "DataFormats/CSCDigi/interface/CSCConstants.h"
+//#currently working in CMSSW_11_3_0_pre5; (which has a different location of CSCConstants)
 
 
 
@@ -30,9 +32,6 @@ CSCStubResolutionValidation::CSCStubResolutionValidation(const edm::ParameterSet
   // Initialize stub matcher
   cscStubMatcher_.reset(new CSCStubMatcher(pset, std::move(iC)));
 
-  //make a new  sim hit matcher
-  muonSimHitMatcher_.reset(new CSCSimHitMatcher(pset, std::move(iC)));
-
 }
 
 CSCStubResolutionValidation::~CSCStubResolutionValidation() {}
@@ -49,14 +48,16 @@ void CSCStubResolutionValidation::bookHistograms(DQMStore::IBooker& iBooker) {
     std::string t1 = "CLCTPosRes_hs_" + cn;
     std::string t2 = "CLCTPosRes_qs_" + cn;
     std::string t3 = "CLCTPosRes_es_" + cn;
-    
-    posresCLCT_hs[j] = iBooker.book1D(t1, t1 + ";Strip_{L1T} - Strip_{SIM}", 50, -1, 1);
-    posresCLCT_qs[j] = iBooker.book1D(t2, t2 + ";Strip_{L1T} - Strip_{SIM}", 50, -1, 1);
-    posresCLCT_es[j] = iBooker.book1D(t3, t3 + ";Strip_{L1T} - Strip_{SIM}", 50, -1, 1);
+
+    posresCLCT_hs[j] = iBooker.book1D(t1, cn + " CLCT Position Resolution (1/2-strip prec.); Strip_{L1T} - Strip_{SIM}; Entries", 50, -1, 1);
+    posresCLCT_qs[j] = iBooker.book1D(t2, cn + " CLCT Position Resolution (1/4-strip prec.); Strip_{L1T} - Strip_{SIM}; Entries", 50, -1, 1);
+    posresCLCT_es[j] = iBooker.book1D(t3, cn + " CLCT Position Resolution (1/8-strip prec.); Strip_{L1T} - Strip_{SIM}; Entries", 50, -1, 1);
 
     //Slope resolution; CLCT
     t1 = "CLCTBendRes_" + cn;
-    bendresCLCT[j] = iBooker.book1D(t1, t1 + ";Slope_{L1T} - Slope_{SIM}", 50, -0.5, 0.5);  
+   
+    bendresCLCT[j] = iBooker.book1D(t1, cn + " CLCT Bend Resolution; Slope_{L1T} - Slope_{SIM}; Entries", 50, -0.5, 0.5);  
+
   }
 }
 
@@ -75,9 +76,6 @@ void CSCStubResolutionValidation::analyze(const edm::Event& e, const edm::EventS
   // Initialize StubMatcher
   cscStubMatcher_->init(e, eventSetup);
 
-  // Initialize SimHitMatcher
-  muonSimHitMatcher_->init(e, eventSetup);
- 
   
   const edm::SimTrackContainer& sim_track = *sim_tracks.product();
   const edm::SimVertexContainer& sim_vert = *sim_vertices.product();
@@ -108,8 +106,7 @@ void CSCStubResolutionValidation::analyze(const edm::Event& e, const edm::EventS
 
     std::vector<float> dslope_clct(10);
 
-    // match the simhits to the track
-    muonSimHitMatcher_->match(t, sim_vert[t.vertIndex()]);
+    
 
     // Match track to stubs with appropriate vertex
     cscStubMatcher_->match(t, sim_vert[t.vertIndex()]);
@@ -128,29 +125,34 @@ void CSCStubResolutionValidation::analyze(const edm::Event& e, const edm::EventS
       if (!clct.isValid()) continue;
       
       hitCLCT[chamberType - 1] = true;
-      
+
       //calculate deltastrip
       int deltaStrip = 0;
       if (cscId.station() == 1 and cscId.ring() == 4 and clct.getKeyStrip() > CSCConstants::MAX_HALF_STRIP_ME1B)
       	deltaStrip = CSCConstants::MAX_NUM_STRIPS_ME1B;
 
       //get the matched stub's keystrip 
-      const auto& hs_clct = clct.getKeyStrip();
-      const auto& qs_clct = clct.getKeyStrip(4);
-      const auto& es_clct = clct.getKeyStrip(8);
+      // const int hs_clct = clct.getKeyStrip(2);
+      // const int qs_clct = clct.getKeyStrip(4);
+      // const int es_clct = clct.getKeyStrip(8);
 
       // fractional strip
-      const auto& fhs_clct = clct.getFractionalStrip(2);
-      const auto& fqs_clct = clct.getFractionalStrip(4);
-      const auto& fes_clct = clct.getFractionalStrip(8);
+      
+      // const float fhs_clct = clct.getFractionalStrip(2);
+      // const float fqs_clct = clct.getFractionalStrip(4);
+      // const float fes_clct = clct.getFractionalStrip(8);
 
+      std::cout << " 1/2 " << clct.getFractionalStrip(2) << std::endl;
+      std::cout << " 1/4 " << clct.getFractionalStrip(4) << std::endl;
+      std::cout << " 1/8 " << clct.getFractionalStrip(8) << std::endl;
+      
       // in half-strips per layer
       const float slopeHalfStrip(clct.getFractionalSlope());
       const float slopeStrip(slopeHalfStrip / 2.);
 	
       //get the fit hits in chamber for true value
       float stripIntercept, stripSlope;
-      muonSimHitMatcher_->fitHitsInChamber(id, stripIntercept, stripSlope);
+      cscStubMatcher_->cscDigiMatcher()->muonSimHitMatcher()->fitHitsInChamber(id, stripIntercept, stripSlope);
 
       //add offset of +0.25 strips for non-ME1/1 chambers
       const bool isME11(cscId.station()==1 and (cscId.ring()==4 or cscId.ring()==1));
@@ -158,18 +160,28 @@ void CSCStubResolutionValidation::analyze(const edm::Event& e, const edm::EventS
       	stripIntercept -= 0.25;
       }
 
-      const auto& strip_csc_sh = stripIntercept;
-      const auto& bend_csc_sh = stripSlope;
+      const float strip_csc_sh = stripIntercept;
+      const float bend_csc_sh = stripSlope;
 
-      delta_fhs_clct[chamberType - 1] = fhs_clct - deltaStrip - strip_csc_sh;
-      delta_fqs_clct[chamberType - 1] = fqs_clct - deltaStrip - strip_csc_sh;
-      delta_fqs_clct[chamberType - 1] = fes_clct - deltaStrip - strip_csc_sh;
+      // std::cout << "true value " << strip_csc_sh << std::endl;
+      
+      delta_fhs_clct[chamberType - 1] = clct.getFractionalStrip(2) - deltaStrip - strip_csc_sh;
+      delta_fqs_clct[chamberType - 1] = clct.getFractionalStrip(4) - deltaStrip - strip_csc_sh;
+      delta_fes_clct[chamberType - 1] = clct.getFractionalStrip(8) - deltaStrip - strip_csc_sh;
+
+
 
       dslope_clct[chamberType - 1] = slopeStrip - bend_csc_sh;
     }
 
     for (int i = 0; i < 10; i++) {
       if (hitCLCT[i]) {
+
+	// std::cout << "chamber number " << i << std::endl;
+
+	// std::cout << "filling 1/2 plot with "<<delta_fhs_clct[i] << std::endl;
+	// std::cout << "filling 1/4 plot with " <<delta_fqs_clct[i] << std::endl;
+	// std::cout << "filling 1/8 plot with " <<delta_fes_clct[i] << std::endl;
 
 	//fill histograms
 	posresCLCT_hs[i]->Fill(delta_fhs_clct[i]);

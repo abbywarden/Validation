@@ -30,7 +30,6 @@ public:
 
   // access to the matcher
   std::shared_ptr<CSCStubMatcher> cscStubMatcher() { return cscStubMatcher_; }
-  std::shared_ptr<CSCSimHitMatcher> muonSimHitMatcher() const { return muonSimHitMatcher_; }
   void setCSCStubMatcher(std::shared_ptr<CSCStubMatcher> s) { cscStubMatcher_ = s; }
 
   
@@ -41,8 +40,7 @@ private:
   edm::InputTag inputTag_;
 
   std::shared_ptr<CSCStubMatcher> cscStubMatcher_;
-  std::shared_ptr<CSCSimHitMatcher> muonSimHitMatcher_;
-
+  
 
   // resolution for each CSC TP; 10 CSC stations;
   MonitorElement *posresCLCT_hs[10];

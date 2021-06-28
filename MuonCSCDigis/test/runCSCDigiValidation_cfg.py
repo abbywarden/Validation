@@ -20,16 +20,20 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(25),
+    #input = cms.untracked.int32(-100),
     output = cms.optional.untracked.allowed(cms.int32,cms.PSet)
 )
 
 # Input source
+#currently the two files gives 9,000 events;
 process.source = cms.Source(
     "PoolSource",
     fileNames = cms.untracked.vstring(
-        "/store/relval/CMSSW_11_2_0_pre7/RelValSingleMuPt10/GEN-SIM-DIGI-RAW/112X_mcRun3_2021_realistic_v8-v1/20000/0ED98457-2CEC-924D-AAFC-4F3F705C2DCC.root"
+        "/store/relval/CMSSW_11_3_0_pre5/RelValSingleMuPt10/GEN-SIM-DIGI-RAW/113X_mcRun3_2021_realistic_v7-v1/00000/e1f09711-5c3a-4f54-99e4-d628abba5729.root",
+        "/store/relval/CMSSW_11_3_0_pre5/RelValSingleMuPt10/GEN-SIM-DIGI-RAW/113X_mcRun3_2021_realistic_v7-v1/00000/e334818f-da40-4d02-a46d-7ccf1feb4725.root"
     ),
-    secondaryFileNames = cms.untracked.vstring()
+    secondaryFileNames = cms.untracked.vstring(
+    )
 )
 
 # Other statements
