@@ -22,12 +22,14 @@ void CSCComparatorDigiValidation::bookHistograms(DQMStore::IBooker &iBooker) {
                                          100,
                                          0,
                                          100);
+
   // 10 chamber types, if you consider ME1/a and ME1/b separate
   for (int i = 1; i <= 10; ++i) {
     const std::string t1("CSCComparatorDigiTime_" + CSCDetId::chamberName(i));
     const std::string t2("CSCComparatorDigisPerLayer_" + CSCDetId::chamberName(i));
     const std::string t3("CSCComparatorStripAmplitude_" + CSCDetId::chamberName(i));
     const std::string t4("CSCComparator3StripAmplitude_" + CSCDetId::chamberName(i));
+
     theTimeBinPlots[i - 1] = iBooker.book1D(
         t1, "Comparator Time Bin " + CSCDetId::chamberName(i) + " ;Comparator Time Bin; Entries", 16, 0, 16);
     theNDigisPerLayerPlots[i - 1] = iBooker.book1D(

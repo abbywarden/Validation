@@ -25,7 +25,6 @@ CSCStubResolutionValidation::CSCStubResolutionValidation(const edm::ParameterSet
   const auto& stubConfig = pset.getParameterSet("cscALCT");
   inputTag_ = stubConfig.getParameter<edm::InputTag>("inputTag");
   clcts_Token_ = iC.consumes<CSCCLCTDigiCollection>(inputTag_);
-
   
   // Initialize stub matcher
   cscStubMatcher_.reset(new CSCStubMatcher(pset, std::move(iC)));
@@ -42,7 +41,6 @@ void CSCStubResolutionValidation::bookHistograms(DQMStore::IBooker& iBooker) {
     int j = i - 1;
     const std::string cn(CSCDetId::chamberName(i));
 
-    
     //Position resolution; CLCT
     std::string t1 = "CLCTPosRes_hs_" + cn;
     std::string t2 = "CLCTPosRes_qs_" + cn;
@@ -56,7 +54,6 @@ void CSCStubResolutionValidation::bookHistograms(DQMStore::IBooker& iBooker) {
     std::string t4 = "CLCTBendRes_" + cn;
    
     bendresCLCT[j] = iBooker.book1D(t4, cn + " CLCT Bend Resolution; Slope_{L1T} - Slope_{SIM}; Entries", 50, -0.5, 0.5);  
-
   }
 }
 
@@ -105,7 +102,6 @@ void CSCStubResolutionValidation::analyze(const edm::Event& e, const edm::EventS
 
     std::vector<float> dslope_clct(10);
 
-
     // Match track to stubs with appropriate vertex
     cscStubMatcher_->match(t, sim_vert[t.vertIndex()]);
 
@@ -113,7 +109,7 @@ void CSCStubResolutionValidation::analyze(const edm::Event& e, const edm::EventS
     // Key: ChamberID, Value : CSCStubDigiContainer
     const auto& clcts = cscStubMatcher_->clcts();
     
-    
+
     //CLCTs
     for (auto& [id, container] : clcts) {
       const CSCDetId cscId(id);
@@ -130,7 +126,6 @@ void CSCStubResolutionValidation::analyze(const edm::Event& e, const edm::EventS
       if (cscId.station() == 1 and cscId.ring() == 4 and clct.getKeyStrip() > CSCConstants::MAX_HALF_STRIP_ME1B)
       	deltaStrip = CSCConstants::NUM_HALF_STRIPS_ME1B;
 
-      
       //get the matched stub's keystrip 
       // const int hs_clct = clct.getKeyStrip(2);
       // const int qs_clct = clct.getKeyStrip(4);
@@ -140,7 +135,7 @@ void CSCStubResolutionValidation::analyze(const edm::Event& e, const edm::EventS
        const float fhs_clct = clct.getFractionalStrip(2);
        const float fqs_clct = clct.getFractionalStrip(4);
        const float fes_clct = clct.getFractionalStrip(8);
-            
+
       // in half-strips per layer
       const float slopeHalfStrip(clct.getFractionalSlope());
       const float slopeStrip(slopeHalfStrip / 2.);
@@ -171,6 +166,7 @@ void CSCStubResolutionValidation::analyze(const edm::Event& e, const edm::EventS
 	std::cout << "deltaStrip " << deltaStrip << std::endl;
 	std::cout << "strip_csc_sh " << strip_csc_sh << std::endl;
       }
+
     }
 
     for (int i = 0; i < 10; i++) {

@@ -641,6 +641,7 @@ GlobalPoint CSCStubMatcher::getGlobalPosition(unsigned int rawId, const CSCCorre
   // case ME1/a
   if (cscId.station() == 1 and cscId.ring() == 4 and lct.getStrip() > CSCConstants::MAX_HALF_STRIP_ME1B) {
     fractional_strip -= CSCConstants::NUM_STRIPS_ME1B;
+
   }
   // regular cases
   const auto& chamber = cscGeometry_->chamber(cscId);

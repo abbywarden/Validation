@@ -1,5 +1,5 @@
 import FWCore.ParameterSet.Config as cms
-from FWCore.ParameterSet.VarParsing import VarParsing
+
 from Configuration.Eras.Era_Run3_cff import Run3
 
 process = cms.Process('VALIDATION',Run3)
@@ -18,7 +18,6 @@ process.load('DQMOffline.Configuration.DQMOfflineMC_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
-
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(25),
     output = cms.optional.untracked.allowed(cms.int32,cms.PSet)
@@ -36,7 +35,6 @@ process.source = cms.Source(
 # Other statements
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase1_2021_realistic', '')
-
 
 # CSC Trigger Primitives emulator
 process.load("L1Trigger.CSCTriggerPrimitives.cscTriggerPrimitiveDigis_cfi")
@@ -57,7 +55,6 @@ process.DQMoutput = cms.OutputModule("DQMRootOutputModule",
 )
 
 # Path and EndPath definitions
-
 process.l1sim_step = cms.Path(l1csc)
 process.validation_step = cms.Path(process.mix * process.cscDigiValidation)
 process.endjob_step = cms.EndPath(process.endOfProcess)

@@ -20,7 +20,8 @@ CSCDigiValidation::CSCDigiValidation(const edm::ParameterSet &ps)
       theALCTDigiValidation(nullptr),
       theCLCTDigiValidation(nullptr),
       theStubEfficiencyValidation(nullptr),
-      theStubResolutionValidation(nullptr){
+      theStubResolutionValidation(nullptr) {  
+
   // instantiatethe validation modules
   theStripDigiValidation = std::make_unique<CSCStripDigiValidation>(ps, consumesCollector());
   theWireDigiValidation = std::make_unique<CSCWireDigiValidation>(ps, consumesCollector());

@@ -16,6 +16,7 @@ CSCCLCTDigiValidation::CSCCLCTDigiValidation(const edm::ParameterSet &ps, edm::C
 CSCCLCTDigiValidation::~CSCCLCTDigiValidation() {}
 
 void CSCCLCTDigiValidation::bookHistograms(DQMStore::IBooker &iBooker) {
+
   theNDigisPerEventPlot = iBooker.book1D(
       "CSCCLCTDigisPerEvent", "CLCT trigger primitives per event; Number of CLCTs; Entries", 100, 0, 100);
   for (int i = 1; i <= 10; ++i) {

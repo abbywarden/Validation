@@ -39,6 +39,7 @@ private:
   bool isSimTrackGood(const SimTrack &t);
 
   edm::InputTag inputTag_;
+
   std::shared_ptr<CSCStubMatcher> cscStubMatcher_;
   
 
@@ -49,7 +50,6 @@ private:
 
   MonitorElement *bendresCLCT[10];
 
-  
   edm::EDGetTokenT<edm::SimVertexContainer> simVertexInput_;
   edm::EDGetTokenT<edm::SimTrackContainer> simTrackInput_;
   edm::EDGetTokenT<CSCCLCTDigiCollection> clcts_Token_;
@@ -58,17 +58,6 @@ private:
   double simTrackMinEta_;
   double simTrackMaxEta_;
 
-
-  std::vector<std::string> positionLUTFiles_;
-  std::vector<std::string> slopeLUTFiles_;
-  std::vector<std::string> patternConversionLUTFiles_;
-
-  //  unique pointers to the luts
-  std::array<std::unique_ptr<CSCLUTReader>, 5> lutpos_;
-  std::array<std::unique_ptr<CSCLUTReader>, 5> lutslope_;
-  std::array<std::unique_ptr<CSCLUTReader>, 5> lutpatconv_;
-
-   
 };
 
 #endif

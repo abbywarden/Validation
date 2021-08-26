@@ -1,5 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 from Configuration.Eras.Era_Run3_cff import Run3
+
 from Validation.MuonHits.muonSimHitMatcherPSet import *
 from Validation.MuonGEMDigis.muonGEMDigiPSet import *
 from Validation.MuonCSCDigis.muonCSCDigiPSet import *
@@ -16,7 +17,7 @@ cscDigiValidation = DQMEDAnalyzer(
     muonCSCDigiPSet,
     muonCSCStubPSet,
     cclutParams.clone(),
-   
+
     simHitsTag = cms.InputTag("mix", "g4SimHitsMuonCSCHits"),
     doSim = cms.bool(True),
     useGEMs = cms.bool(False),
